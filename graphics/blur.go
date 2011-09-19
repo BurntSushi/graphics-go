@@ -25,12 +25,13 @@ func blurRGBA(src *image.RGBA, sd float64, size int) *image.RGBA {
 		kernel[i] = circularGauss(float64(i), sd)
 	}
 
-	// TODO(crawshaw): Why don't we add kernel[0] here?
 	kernelSum := 0.0
 	for i := 1; i <= size; i++ {
 		kernelSum += kernel[i]
 	}
-	kernelSum *= 2
+	kernelSum = 2*kernelSum + kernel[0]
+	// The 2-D kernel sum is the square of the 1-D kernel sum.
+	kernelSum *= kernelSum
 
 	bounds := src.Bounds()
 	width := bounds.Max.X - bounds.Min.X
@@ -142,10 +143,10 @@ func blurRGBA(src *image.RGBA, sd float64, size int) *image.RGBA {
 			a /= kernelSum
 
 			dstOff := (y-dst.Rect.Min.Y)*dst.Stride + (x-dst.Rect.Min.X)*4
-			dst.Pix[dstOff+0] = uint8(math.Fmin(255.0, r))
-			dst.Pix[dstOff+1] = uint8(math.Fmin(255.0, g))
-			dst.Pix[dstOff+2] = uint8(math.Fmin(255.0, b))
-			dst.Pix[dstOff+3] = uint8(math.Fmin(255.0, a))
+			dst.Pix[dstOff+0] = uint8(math.Fmin(255.0, r+0.5))
+			dst.Pix[dstOff+1] = uint8(math.Fmin(255.0, g+0.5))
+			dst.Pix[dstOff+2] = uint8(math.Fmin(255.0, b+0.5))
+			dst.Pix[dstOff+3] = uint8(math.Fmin(255.0, a+0.5))
 		}
 	}
 
