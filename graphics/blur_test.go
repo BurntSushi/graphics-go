@@ -12,6 +12,8 @@ import (
 	"testing"
 
 	"graphics-go.googlecode.com/hg/graphics"
+
+	_ "image/png"
 )
 
 func delta(u0, u1 uint32) int {
@@ -203,15 +205,46 @@ func TestBlurOneColor(t *testing.T) {
 	}
 }
 
+func TestBlurGopher(t *testing.T) {
+	src, err := loadImage("../testdata/gopher.png")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	dst := graphics.Blur(src, &graphics.BlurOptions{StdDev: 1.1})
+
+	cmp, err := loadImage("../testdata/gopher-blur.png")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if !dst.Bounds().Eq(cmp.Bounds()) {
+		t.Errorf("bounds got %v want %v", dst.Bounds(), cmp.Bounds())
+		return
+	}
+
+	b := dst.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			c0 := dst.At(x, y)
+			c1 := cmp.At(x, y)
+			if !withinTolerance(c0, c1, 0) {
+				t.Errorf("(%d,%d): got %v want %v", x, y, c0, c1)
+				return
+			}
+		}
+	}
+}
+
 func benchBlur(b *testing.B, bounds image.Rectangle) {
 	b.StopTimer()
 
 	// Construct a fuzzy image.
 	img := image.NewRGBA(bounds)
-	dy := bounds.Dy()
-	dx := bounds.Dx()
-	for y := 0; y < dy; y++ {
-		for x := 0; x < dx/4; x++ {
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			img.SetRGBA(x, y, image.RGBAColor{
 				uint8(5 * x % 0x100),
 				uint8(7 * y % 0x100),
