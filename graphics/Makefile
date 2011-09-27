@@ -6,6 +6,9 @@ include $(GOROOT)/src/Make.inc
 
 TARG=graphics-go.googlecode.com/hg/graphics
 GOFILES=\
+	bilinear.go\
 	blur.go\
+	rotate.go\
+	scale.go\
 
 include $(GOROOT)/src/Make.pkg

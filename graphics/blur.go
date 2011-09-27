@@ -19,7 +19,7 @@ func circularGauss(x float64, sd float64) float64 {
 	return coeff * math.Pow(math.E, -1*math.Pow(x, 2)/(2*sdSq))
 }
 
-func blurRGBA(src *image.RGBA, sd float64, size int) *image.RGBA {
+func blurRGBA(dst, src *image.RGBA, sd float64, size int) {
 	kernel := make([]float64, size+1)
 	for i := 0; i <= size; i++ {
 		kernel[i] = circularGauss(float64(i), sd)
@@ -91,8 +91,6 @@ func blurRGBA(src *image.RGBA, sd float64, size int) *image.RGBA {
 		}
 	}
 
-	dst := image.NewRGBA(src.Bounds())
-
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			var r, g, b, a float64
@@ -149,8 +147,6 @@ func blurRGBA(src *image.RGBA, sd float64, size int) *image.RGBA {
 			dst.Pix[dstOff+3] = uint8(math.Fmin(255.0, a+0.5))
 		}
 	}
-
-	return dst
 }
 
 // DefaultStdDev is the default blurring parameter.
@@ -165,7 +161,7 @@ type BlurOptions struct {
 }
 
 // Blur produces a blurred version of the image, using a Gaussian blur.
-func Blur(src image.Image, opt *BlurOptions) image.Image {
+func Blur(dst draw.Image, src image.Image, opt *BlurOptions) {
 	sd := DefaultStdDev
 	size := 0
 
@@ -178,13 +174,22 @@ func Blur(src image.Image, opt *BlurOptions) image.Image {
 		size = int(math.Ceil(sd * 6))
 	}
 
-	rgba, ok := src.(*image.RGBA)
+	srcRgba, ok := src.(*image.RGBA)
 	if !ok {
-		// Make a copy of src as an image.RGBA.
 		b := src.Bounds()
-		rgba = image.NewRGBA(b)
-		draw.Draw(rgba, b, src, b.Min, draw.Src)
+		srcRgba = image.NewRGBA(b)
+		draw.Draw(srcRgba, b, src, b.Min, draw.Src)
 	}
 
-	return blurRGBA(rgba, sd, size)
+	b := dst.Bounds()
+	dstRgba, ok := dst.(*image.RGBA)
+	if !ok {
+		dstRgba = image.NewRGBA(b)
+	}
+
+	blurRGBA(dstRgba, srcRgba, sd, size)
+
+	if !ok {
+		draw.Draw(dst, b, dstRgba, b.Min, draw.Src)
+	}
 }

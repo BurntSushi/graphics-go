@@ -2,76 +2,31 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package graphics_test
+package graphics
 
 import (
-	"bytes"
-	"fmt"
 	"image"
-	"os"
 	"testing"
-
-	"graphics-go.googlecode.com/hg/graphics"
 
 	_ "image/png"
 )
 
-func delta(u0, u1 uint32) int {
-	d := int(u0) - int(u1)
-	if d < 0 {
-		return -d
-	}
-	return d
-}
-
-func withinTolerance(c0, c1 image.Color, tolerance int) bool {
-	r0, g0, b0, a0 := c0.RGBA()
-	r1, g1, b1, a1 := c1.RGBA()
-	r := delta(r0, r1)
-	g := delta(g0, g1)
-	b := delta(b0, b1)
-	a := delta(a0, a1)
-	return r <= tolerance && g <= tolerance && b <= tolerance && a <= tolerance
-}
-
-func sprintBox(box []byte, width, height int) string {
-	buf := bytes.NewBuffer(nil)
-	i := 0
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			fmt.Fprintf(buf, " 0x%02x,", box[i])
-			i++
-		}
-		buf.WriteByte('\n')
-	}
-	return buf.String()
-}
-
-type blurOneColorTest struct {
-	desc   string
-	width  int
-	height int
-	opt    *graphics.BlurOptions
-	src    []uint8
-	res    []uint8
-}
-
-var blurOneColorTests = []blurOneColorTest{
+var blurOneColorTests = []transformOneColorTest{
 	{
-		"1x1-blank", 1, 1,
-		&graphics.BlurOptions{0.83, 1},
+		"1x1-blank", 1, 1, 1, 1,
+		&BlurOptions{0.83, 1},
 		[]uint8{0xff},
 		[]uint8{0xff},
 	},
 	{
-		"1x1-spreadblank", 1, 1,
-		&graphics.BlurOptions{0.83, 2},
+		"1x1-spreadblank", 1, 1, 1, 1,
+		&BlurOptions{0.83, 2},
 		[]uint8{0xff},
 		[]uint8{0xff},
 	},
 	{
-		"3x3-blank", 3, 3,
-		&graphics.BlurOptions{0.83, 2},
+		"3x3-blank", 3, 3, 3, 3,
+		&BlurOptions{0.83, 2},
 		[]uint8{
 			0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff,
@@ -84,8 +39,8 @@ var blurOneColorTests = []blurOneColorTest{
 		},
 	},
 	{
-		"3x3-dot", 3, 3,
-		&graphics.BlurOptions{0.34, 1},
+		"3x3-dot", 3, 3, 3, 3,
+		&BlurOptions{0.34, 1},
 		[]uint8{
 			0x00, 0x00, 0x00,
 			0x00, 0xff, 0x00,
@@ -98,8 +53,8 @@ var blurOneColorTests = []blurOneColorTest{
 		},
 	},
 	{
-		"5x5-dot", 5, 5,
-		&graphics.BlurOptions{0.34, 1},
+		"5x5-dot", 5, 5, 5, 5,
+		&BlurOptions{0.34, 1},
 		[]uint8{
 			0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00,
@@ -116,8 +71,8 @@ var blurOneColorTests = []blurOneColorTest{
 		},
 	},
 	{
-		"5x5-dot-spread", 5, 5,
-		&graphics.BlurOptions{0.85, 1},
+		"5x5-dot-spread", 5, 5, 5, 5,
+		&BlurOptions{0.85, 1},
 		[]uint8{
 			0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00,
@@ -134,8 +89,8 @@ var blurOneColorTests = []blurOneColorTest{
 		},
 	},
 	{
-		"4x4-box", 4, 4,
-		&graphics.BlurOptions{0.34, 1},
+		"4x4-box", 4, 4, 4, 4,
+		&BlurOptions{0.34, 1},
 		[]uint8{
 			0x00, 0x00, 0x00, 0x00,
 			0x00, 0xff, 0xff, 0x00,
@@ -150,8 +105,8 @@ var blurOneColorTests = []blurOneColorTest{
 		},
 	},
 	{
-		"5x5-twodots", 5, 5,
-		&graphics.BlurOptions{0.34, 1},
+		"5x5-twodots", 5, 5, 5, 5,
+		&BlurOptions{0.34, 1},
 		[]uint8{
 			0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00,
@@ -171,35 +126,12 @@ var blurOneColorTests = []blurOneColorTest{
 
 func TestBlurOneColor(t *testing.T) {
 	for _, oc := range blurOneColorTests {
-		img := image.NewRGBA(image.Rect(0, 0, oc.width, oc.height))
-		i := 0
-		for y := 0; y < oc.height; y++ {
-			for x := 0; x < oc.width; x++ {
-				img.SetRGBA(x, y, image.RGBAColor{R: oc.src[i]})
-				i++
-			}
-		}
+		dst := oc.newDst()
+		src := oc.newSrc()
+		opt := oc.opt.(*BlurOptions)
+		Blur(dst, src, opt)
 
-		imgBlur, ok := graphics.Blur(img, oc.opt).(*image.RGBA)
-		if !ok {
-			t.Errorf("%s: blurred image is not RGBA", oc.desc)
-			continue
-		}
-
-		i = 0
-		res := make([]byte, len(oc.res))
-		for y := 0; y < oc.height; y++ {
-			for x := 0; x < oc.width; x++ {
-				off := (y-img.Rect.Min.Y)*img.Stride + (x-img.Rect.Min.X)*4
-				res[i] = imgBlur.Pix[off]
-				i++
-			}
-		}
-
-		if !bytes.Equal(res, oc.res) {
-			got := sprintBox(res, oc.width, oc.height)
-			want := sprintBox(oc.res, oc.width, oc.height)
-			t.Errorf("%s:\n got\n%s\n want\n%s", oc.desc, got, want)
+		if !checkTransformTest(t, &oc, dst, src) {
 			continue
 		}
 	}
@@ -212,29 +144,18 @@ func TestBlurGopher(t *testing.T) {
 		return
 	}
 
-	dst := graphics.Blur(src, &graphics.BlurOptions{StdDev: 1.1})
+	dst := image.NewRGBA(src.Bounds())
+	Blur(dst, src, &BlurOptions{StdDev: 1.1})
 
 	cmp, err := loadImage("../testdata/gopher-blur.png")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-
-	if !dst.Bounds().Eq(cmp.Bounds()) {
-		t.Errorf("bounds got %v want %v", dst.Bounds(), cmp.Bounds())
+	err = imageWithinTolerance(dst, cmp, 0)
+	if err != nil {
+		t.Error(err)
 		return
-	}
-
-	b := dst.Bounds()
-	for y := b.Min.Y; y < b.Max.Y; y++ {
-		for x := b.Min.X; x < b.Max.X; x++ {
-			c0 := dst.At(x, y)
-			c1 := cmp.At(x, y)
-			if !withinTolerance(c0, c1, 0) {
-				t.Errorf("(%d,%d): got %v want %v", x, y, c0, c1)
-				return
-			}
-		}
 	}
 }
 
@@ -242,10 +163,10 @@ func benchBlur(b *testing.B, bounds image.Rectangle) {
 	b.StopTimer()
 
 	// Construct a fuzzy image.
-	img := image.NewRGBA(bounds)
+	src := image.NewRGBA(bounds)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			img.SetRGBA(x, y, image.RGBAColor{
+			src.SetRGBA(x, y, image.RGBAColor{
 				uint8(5 * x % 0x100),
 				uint8(7 * y % 0x100),
 				uint8((7*x + 5*y) % 0x100),
@@ -253,21 +174,12 @@ func benchBlur(b *testing.B, bounds image.Rectangle) {
 			})
 		}
 	}
+	dst := image.NewRGBA(bounds)
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		graphics.Blur(img, &graphics.BlurOptions{0.84, 3})
+		Blur(dst, src, &BlurOptions{0.84, 3})
 	}
-}
-
-func loadImage(path string) (img image.Image, err os.Error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-	img, _, err = image.Decode(file)
-	return
 }
 
 func BenchmarkBlur400x400x3(b *testing.B) {
