@@ -10,141 +10,122 @@ import (
 	"math"
 )
 
-func circularGauss(x float64, sd float64) float64 {
-	sdSq := sd * sd
-	// If we were calculating the standard 1D Gaussian, this would
-	// be 1/math.Sqrt(...). However this is a single dimension of
-	// the circularly symmetric Gaussian. So no Sqrt.
-	coeff := 1 / (2 * math.Pi * sdSq)
-	return coeff * math.Pow(math.E, -1*math.Pow(x, 2)/(2*sdSq))
-}
-
 func blurRGBA(dst, src *image.RGBA, sd float64, size int) {
-	kernel := make([]float64, size+1)
+	// kernel is the Gaussian kernel weights, scaled so that kernel[0] == 1<<16.
+	kernel := make([]uint64, size+1)
 	for i := 0; i <= size; i++ {
-		kernel[i] = circularGauss(float64(i), sd)
+		x := float64(i) / sd
+		kernel[i] = uint64(math.Pow(1/math.SqrtE, x*x) * (1 << 16))
 	}
-
-	kernelSum := 0.0
+	// ksum is the 2-D kernel sum, which is the square of the 1-D kernel sum.
+	var kSum uint64
 	for i := 1; i <= size; i++ {
-		kernelSum += kernel[i]
+		kSum += kernel[i]
 	}
-	kernelSum = 2*kernelSum + kernel[0]
-	// The 2-D kernel sum is the square of the 1-D kernel sum.
-	kernelSum *= kernelSum
+	kSum = 2*kSum + kernel[0]
+	kSum *= kSum
 
+	// buf holds the result of vertically blurring src.
 	bounds := src.Bounds()
-	width := bounds.Max.X - bounds.Min.X
-	height := bounds.Max.Y - bounds.Min.Y
-	ds1 := make([]float64, width*height*4)
-
+	width, height := bounds.Dx(), bounds.Dy()
+	buf := make([]uint64, width*height*4)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			var r, g, b, a float64
-			off := (y-src.Rect.Min.Y)*src.Stride + (x-src.Rect.Min.X)*4
+			var r, g, b, a uint64
+			// k0 is the kernel weight for the center pixel. This may be greater
+			// than kernel[0], near the boundary of the source image, to avoid
+			// vignetting. off is the src.Pix offset of the center pixel.
+			k0, off := kernel[0], (y-bounds.Min.Y)*src.Stride+(x-bounds.Min.X)*4
 
-			// When we fail to copy non-existant data near the boundaries of the
-			// image, maintain an adjustment factor and use it to take more from
-			// the original pixel. Avoids vignetting.
-			adjust := float64(0)
-
-			// Add blur from above.
+			// Add the pixels from above.
 			for i := 1; i <= size; i++ {
+				k := kernel[i]
 				if y-i < bounds.Min.Y {
-					adjust += kernel[i]
+					k0 += k
 				} else {
 					o := off - i*src.Stride
-					factor := kernel[i]
-					r += float64(src.Pix[o+0]) * factor
-					g += float64(src.Pix[o+1]) * factor
-					b += float64(src.Pix[o+2]) * factor
-					a += float64(src.Pix[o+3]) * factor
+					r += uint64(src.Pix[o+0]) * k
+					g += uint64(src.Pix[o+1]) * k
+					b += uint64(src.Pix[o+2]) * k
+					a += uint64(src.Pix[o+3]) * k
 				}
 			}
 
-			// Add blur from below.
+			// Add the pixels from below.
 			for i := 1; i <= size; i++ {
+				k := kernel[i]
 				if y+i >= bounds.Max.Y {
-					adjust += kernel[i]
+					k0 += k
 				} else {
 					o := off + i*src.Stride
-					factor := kernel[i]
-					r += float64(src.Pix[o+0]) * factor
-					g += float64(src.Pix[o+1]) * factor
-					b += float64(src.Pix[o+2]) * factor
-					a += float64(src.Pix[o+3]) * factor
+					r += uint64(src.Pix[o+0]) * k
+					g += uint64(src.Pix[o+1]) * k
+					b += uint64(src.Pix[o+2]) * k
+					a += uint64(src.Pix[o+3]) * k
 				}
 			}
 
-			// Add a fraction of the original pixel.
-			factor := kernel[0] + adjust
-			r += float64(src.Pix[off+0]) * factor
-			g += float64(src.Pix[off+1]) * factor
-			b += float64(src.Pix[off+2]) * factor
-			a += float64(src.Pix[off+3]) * factor
+			// Add the central pixel.
+			r += uint64(src.Pix[off+0]) * k0
+			g += uint64(src.Pix[off+1]) * k0
+			b += uint64(src.Pix[off+2]) * k0
+			a += uint64(src.Pix[off+3]) * k0
 
+			// Write to buf.
 			o := (y-bounds.Min.Y)*width*4 + (x-bounds.Min.X)*4
-			ds1[o+0] = r
-			ds1[o+1] = g
-			ds1[o+2] = b
-			ds1[o+3] = a
+			buf[o+0] = r
+			buf[o+1] = g
+			buf[o+2] = b
+			buf[o+3] = a
 		}
 	}
 
+	// dst holds the result of horizontally blurring buf.
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			var r, g, b, a float64
-			adjust := float64(0)
-			off := y*width*4 + x*4
+			var r, g, b, a uint64
+			k0, off := kernel[0], y*width*4+x*4
 
-			// Add blur from the left.
+			// Add the pixels from the left.
 			for i := 1; i <= size; i++ {
+				k := kernel[i]
 				if x-i < 0 {
-					adjust += kernel[i]
+					k0 += k
 				} else {
 					o := off - i*4
-					factor := kernel[i]
-					r += ds1[o+0] * factor
-					g += ds1[o+1] * factor
-					b += ds1[o+2] * factor
-					a += ds1[o+3] * factor
+					r += buf[o+0] * k
+					g += buf[o+1] * k
+					b += buf[o+2] * k
+					a += buf[o+3] * k
 				}
 			}
 
-			// Add blur from the right.
+			// Add the pixels from the right.
 			for i := 1; i <= size; i++ {
+				k := kernel[i]
 				if x+i >= width {
-					adjust += kernel[i]
+					k0 += k
 				} else {
 					o := off + i*4
-					factor := kernel[i]
-					r += ds1[o+0] * factor
-					g += ds1[o+1] * factor
-					b += ds1[o+2] * factor
-					a += ds1[o+3] * factor
+					r += buf[o+0] * k
+					g += buf[o+1] * k
+					b += buf[o+2] * k
+					a += buf[o+3] * k
 				}
 			}
 
-			// Add a fraction of the original pixel.
-			factor := kernel[0] + adjust
-			r += ds1[off+0] * factor
-			g += ds1[off+1] * factor
-			b += ds1[off+2] * factor
-			a += ds1[off+3] * factor
+			// Add the central pixel.
+			r += buf[off+0] * k0
+			g += buf[off+1] * k0
+			b += buf[off+2] * k0
+			a += buf[off+3] * k0
 
-			// When the kernel does not sum to 1.0, the resulting image has
-			// less intensity than the original. Dividing through by the sum
-			// corrects this.
-			r /= kernelSum
-			g /= kernelSum
-			b /= kernelSum
-			a /= kernelSum
-
+			// Write to dst, scaling back to the range [0, 255].
 			dstOff := (y-dst.Rect.Min.Y)*dst.Stride + (x-dst.Rect.Min.X)*4
-			dst.Pix[dstOff+0] = uint8(math.Fmin(255.0, r+0.5))
-			dst.Pix[dstOff+1] = uint8(math.Fmin(255.0, g+0.5))
-			dst.Pix[dstOff+2] = uint8(math.Fmin(255.0, b+0.5))
-			dst.Pix[dstOff+3] = uint8(math.Fmin(255.0, a+0.5))
+			dst.Pix[dstOff+0] = uint8((r + kSum/2) / kSum)
+			dst.Pix[dstOff+1] = uint8((g + kSum/2) / kSum)
+			dst.Pix[dstOff+2] = uint8((b + kSum/2) / kSum)
+			dst.Pix[dstOff+3] = uint8((a + kSum/2) / kSum)
 		}
 	}
 }

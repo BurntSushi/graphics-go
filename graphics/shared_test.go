@@ -86,17 +86,17 @@ func delta(u0, u1 uint32) int {
 	return d
 }
 
-func withinTolerance(c0, c1 image.Color, tolerance int) bool {
+func withinTolerance(c0, c1 image.Color, tol int) bool {
 	r0, g0, b0, a0 := c0.RGBA()
 	r1, g1, b1, a1 := c1.RGBA()
 	r := delta(r0, r1)
 	g := delta(g0, g1)
 	b := delta(b0, b1)
 	a := delta(a0, a1)
-	return r <= tolerance && g <= tolerance && b <= tolerance && a <= tolerance
+	return r <= tol && g <= tol && b <= tol && a <= tol
 }
 
-func imageWithinTolerance(m0, m1 image.Image, t int) os.Error {
+func imageWithinTolerance(m0, m1 image.Image, tol int) os.Error {
 	b0 := m0.Bounds()
 	b1 := m1.Bounds()
 	if !b0.Eq(b1) {
@@ -107,7 +107,7 @@ func imageWithinTolerance(m0, m1 image.Image, t int) os.Error {
 		for x := b0.Min.X; x < b0.Max.X; x++ {
 			c0 := m0.At(x, y)
 			c1 := m1.At(x, y)
-			if !withinTolerance(c0, c1, 0) {
+			if !withinTolerance(c0, c1, tol) {
 				e := fmt.Sprintf("got %v want %v at (%d, %d)", c0, c1, x, y)
 				return os.NewError(e)
 			}

@@ -152,7 +152,7 @@ func TestBlurGopher(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = imageWithinTolerance(dst, cmp, 0)
+	err = imageWithinTolerance(dst, cmp, 0x101)
 	if err != nil {
 		t.Error(err)
 		return
