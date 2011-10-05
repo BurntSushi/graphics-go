@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/color"
 	"os"
 	"testing"
 )
@@ -29,7 +30,7 @@ func (oc *transformOneColorTest) newSrc() *image.RGBA {
 	i := 0
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
-			src.SetRGBA(x, y, image.RGBAColor{
+			src.SetRGBA(x, y, color.RGBA{
 				R: oc.src[i],
 				G: oc.src[i],
 				B: oc.src[i],
@@ -86,7 +87,7 @@ func delta(u0, u1 uint32) int {
 	return d
 }
 
-func withinTolerance(c0, c1 image.Color, tol int) bool {
+func withinTolerance(c0, c1 color.Color, tol int) bool {
 	r0, g0, b0, a0 := c0.RGBA()
 	r1, g1, b1, a1 := c1.RGBA()
 	r := delta(r0, r1)

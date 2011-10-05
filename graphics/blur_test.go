@@ -6,6 +6,7 @@ package graphics
 
 import (
 	"image"
+	"image/color"
 	"testing"
 
 	_ "image/png"
@@ -166,7 +167,7 @@ func benchBlur(b *testing.B, bounds image.Rectangle) {
 	src := image.NewRGBA(bounds)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			src.SetRGBA(x, y, image.RGBAColor{
+			src.SetRGBA(x, y, color.RGBA{
 				uint8(5 * x % 0x100),
 				uint8(7 * y % 0x100),
 				uint8((7*x + 5*y) % 0x100),
