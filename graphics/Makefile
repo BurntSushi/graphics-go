@@ -11,5 +11,6 @@ GOFILES=\
 	convolve.go\
 	rotate.go\
 	scale.go\
+	thumbnail.go\
 
 include $(GOROOT)/src/Make.pkg
