@@ -8,6 +8,7 @@ TARG=graphics-go.googlecode.com/hg/graphics
 GOFILES=\
 	bilinear.go\
 	blur.go\
+	convolve.go\
 	rotate.go\
 	scale.go\
 
