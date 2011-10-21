@@ -7,6 +7,8 @@ package graphics
 import (
 	"image"
 	"image/draw"
+	"math"
+	"os"
 )
 
 // clamp clamps x to the range [x0, x1].
@@ -22,7 +24,7 @@ func clamp(x, x0, x1 float64) float64 {
 
 // Kernel is a square matrix that defines a convolution.
 type Kernel interface {
-	// TODO: document how the slice is laid out.
+	// Weights returns the square matrix of weights in row major order.
 	Weights() []float64
 }
 
@@ -39,10 +41,34 @@ type SeparableKernel struct {
 }
 
 func (k *SeparableKernel) Weights() []float64 {
-	panic("unimplemented")
+	n := len(k.X)
+	w := make([]float64, n*n)
+	for y := 0; y < n; y++ {
+		for x := 0; x < n; x++ {
+			w[y*n+x] = k.X[x] * k.Y[y]
+		}
+	}
+	return w
 }
 
-func convolveRGBASep(dst *image.RGBA, src *image.RGBA, k *SeparableKernel) {
+// fullKernel is a square convolution kernel.
+type fullKernel []float64
+
+func (k fullKernel) Weights() []float64 { return k }
+
+// NewKernel returns a square convolution kernel.
+func NewKernel(w []float64) (Kernel, os.Error) {
+	size := int(math.Sqrt(float64(len(w))))
+	if size*size != len(w) {
+		return nil, os.NewError("kernel not square")
+	}
+	if size%2 != 1 {
+		return nil, os.NewError("kernel size is even")
+	}
+	return fullKernel(w), nil
+}
+
+func convolveRGBASep(dst *image.RGBA, src image.Image, k *SeparableKernel) {
 	if len(k.X) != len(k.Y) || len(k.X)%2 != 1 {
 		// TODO: return an error.
 		panic("invalid kernel")
@@ -58,8 +84,8 @@ func convolveRGBASep(dst *image.RGBA, src *image.RGBA, k *SeparableKernel) {
 			var r, g, b, a float64
 			// k0 is the kernel weight for the center pixel. This may be greater
 			// than kernel[0], near the boundary of the source image, to avoid
-			// vignetting. off is the src.Pix offset of the center pixel.
-			k0, off := k.X[radius], (y-bounds.Min.Y)*src.Stride+(x-bounds.Min.X)*4
+			// vignetting.
+			k0 := k.X[radius]
 
 			// Add the pixels from above.
 			for i := 1; i <= radius; i++ {
@@ -67,11 +93,11 @@ func convolveRGBASep(dst *image.RGBA, src *image.RGBA, k *SeparableKernel) {
 				if y-i < bounds.Min.Y {
 					k0 += f
 				} else {
-					o := off - i*src.Stride
-					r += float64(src.Pix[o+0]) * f
-					g += float64(src.Pix[o+1]) * f
-					b += float64(src.Pix[o+2]) * f
-					a += float64(src.Pix[o+3]) * f
+					or, og, ob, oa := src.At(x, y-i).RGBA()
+					r += float64(or>>8) * f
+					g += float64(og>>8) * f
+					b += float64(ob>>8) * f
+					a += float64(oa>>8) * f
 				}
 			}
 
@@ -81,19 +107,20 @@ func convolveRGBASep(dst *image.RGBA, src *image.RGBA, k *SeparableKernel) {
 				if y+i >= bounds.Max.Y {
 					k0 += f
 				} else {
-					o := off + i*src.Stride
-					r += float64(src.Pix[o+0]) * f
-					g += float64(src.Pix[o+1]) * f
-					b += float64(src.Pix[o+2]) * f
-					a += float64(src.Pix[o+3]) * f
+					or, og, ob, oa := src.At(x, y+i).RGBA()
+					r += float64(or>>8) * f
+					g += float64(og>>8) * f
+					b += float64(ob>>8) * f
+					a += float64(oa>>8) * f
 				}
 			}
 
 			// Add the central pixel.
-			r += float64(src.Pix[off+0]) * k0
-			g += float64(src.Pix[off+1]) * k0
-			b += float64(src.Pix[off+2]) * k0
-			a += float64(src.Pix[off+3]) * k0
+			or, og, ob, oa := src.At(x, y).RGBA()
+			r += float64(or>>8) * k0
+			g += float64(og>>8) * k0
+			b += float64(ob>>8) * k0
+			a += float64(oa>>8) * k0
 
 			// Write to buf.
 			o := (y-bounds.Min.Y)*width*4 + (x-bounds.Min.X)*4
@@ -154,6 +181,48 @@ func convolveRGBASep(dst *image.RGBA, src *image.RGBA, k *SeparableKernel) {
 	}
 }
 
+func convolveRGBA(dst *image.RGBA, src image.Image, k Kernel) {
+	b := dst.Bounds()
+	bs := src.Bounds()
+	w := k.Weights()
+	size := int(math.Sqrt(float64(len(w))))
+	radius := (size - 1) / 2
+
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			var r, g, b, a, adj float64
+			for cy := y - radius; cy <= y+radius; cy++ {
+				for cx := x - radius; cx <= x+radius; cx++ {
+					factor := w[(cy-y+radius)*size+cx-x+radius]
+					if !image.Pt(cx, cy).In(bs) {
+						adj += factor
+					} else {
+						sr, sg, sb, sa := src.At(cx, cy).RGBA()
+						r += float64(sr>>8) * factor
+						g += float64(sg>>8) * factor
+						b += float64(sb>>8) * factor
+						a += float64(sa>>8) * factor
+					}
+				}
+			}
+
+			if adj != 0 {
+				sr, sg, sb, sa := src.At(x, y).RGBA()
+				r += float64(sr>>8) * adj
+				g += float64(sg>>8) * adj
+				b += float64(sb>>8) * adj
+				a += float64(sa>>8) * adj
+			}
+
+			off := (y-dst.Rect.Min.Y)*dst.Stride + (x-dst.Rect.Min.X)*4
+			dst.Pix[off+0] = uint8(clamp(r+0.5, 0, 0xff))
+			dst.Pix[off+1] = uint8(clamp(g+0.5, 0, 0xff))
+			dst.Pix[off+2] = uint8(clamp(b+0.5, 0, 0xff))
+			dst.Pix[off+3] = uint8(clamp(a+0.5, 0, 0xff))
+		}
+	}
+}
+
 // Convolve produces dst by applying the convolution kernel k to src.
 func Convolve(dst draw.Image, src image.Image, k Kernel) {
 	b := dst.Bounds()
@@ -162,18 +231,11 @@ func Convolve(dst draw.Image, src image.Image, k Kernel) {
 		dstRgba = image.NewRGBA(b)
 	}
 
-	srcRgba, ok := src.(*image.RGBA)
-	if !ok {
-		b := src.Bounds()
-		srcRgba = image.NewRGBA(b)
-		draw.Draw(srcRgba, b, src, b.Min, draw.Src)
-	}
-
 	switch k := k.(type) {
 	case *SeparableKernel:
-		convolveRGBASep(dstRgba, srcRgba, k)
+		convolveRGBASep(dstRgba, src, k)
 	default:
-		panic("unimplemented")
+		convolveRGBA(dstRgba, src, k)
 	}
 
 	if !ok {
