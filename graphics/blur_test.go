@@ -130,33 +130,47 @@ func TestBlurOneColor(t *testing.T) {
 		dst := oc.newDst()
 		src := oc.newSrc()
 		opt := oc.opt.(*BlurOptions)
-		Blur(dst, src, opt)
+		if err := Blur(dst, src, opt); err != nil {
+			t.Fatal(err)
+		}
 
-		if !checkTransformTest(t, &oc, dst, src) {
+		if !checkTransformTest(t, &oc, dst) {
 			continue
 		}
+	}
+}
+
+func TestBlurNil(t *testing.T) {
+	if err := Blur(nil, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestBlurEmpty(t *testing.T) {
+	empty := image.NewRGBA(image.Rect(0, 0, 0, 0))
+	if err := Blur(empty, empty, nil); err != nil {
+		t.Fatal(err)
 	}
 }
 
 func TestBlurGopher(t *testing.T) {
 	src, err := loadImage("../testdata/gopher.png")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	dst := image.NewRGBA(src.Bounds())
-	Blur(dst, src, &BlurOptions{StdDev: 1.1})
+	if err = Blur(dst, src, &BlurOptions{StdDev: 1.1}); err != nil {
+		t.Fatal(err)
+	}
 
 	cmp, err := loadImage("../testdata/gopher-blur.png")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 	err = imageWithinTolerance(dst, cmp, 0x101)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 }
 

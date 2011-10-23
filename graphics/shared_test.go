@@ -46,7 +46,7 @@ func (oc *transformOneColorTest) newDst() *image.RGBA {
 	return image.NewRGBA(image.Rect(0, 0, oc.dstWidth, oc.dstHeight))
 }
 
-func checkTransformTest(t *testing.T, oc *transformOneColorTest, dst, src *image.RGBA) bool {
+func checkTransformTest(t *testing.T, oc *transformOneColorTest, dst *image.RGBA) bool {
 	for ch := 0; ch < 4; ch++ {
 		i := 0
 		res := make([]byte, len(oc.res))

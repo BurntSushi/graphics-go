@@ -50,13 +50,28 @@ func TestConvolve(t *testing.T) {
 	b := src.Bounds()
 
 	sep := image.NewRGBA(b)
-	Convolve(sep, src, kernSep)
+	if err = Convolve(sep, src, kernSep); err != nil {
+		t.Fatal(err)
+	}
 
 	full := image.NewRGBA(b)
 	Convolve(full, src, kernFull)
 
 	err = imageWithinTolerance(sep, full, 0x101)
 	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestConvolveNil(t *testing.T) {
+	if err := Convolve(nil, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestConvolveEmpty(t *testing.T) {
+	empty := image.NewRGBA(image.Rect(0, 0, 0, 0))
+	if err := Convolve(empty, empty, nil); err != nil {
 		t.Fatal(err)
 	}
 }

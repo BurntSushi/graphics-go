@@ -107,10 +107,19 @@ func TestRotateOneColor(t *testing.T) {
 		dst := oc.newDst()
 
 		Rotate(dst, src, oc.opt.(*RotateOptions))
-		if !checkTransformTest(t, &oc, dst, src) {
+		if !checkTransformTest(t, &oc, dst) {
 			continue
 		}
 	}
+}
+
+func TestRotateNil(t *testing.T) {
+	Rotate(nil, nil, nil)
+}
+
+func TestRotateEmpty(t *testing.T) {
+	empty := image.NewRGBA(image.Rect(0, 0, 0, 0))
+	Rotate(empty, empty, nil)
 }
 
 func TestRotateGopherSide(t *testing.T) {

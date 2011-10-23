@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/draw"
 	"math"
+	"os"
 )
 
 // DefaultStdDev is the default blurring parameter.
@@ -22,7 +23,11 @@ type BlurOptions struct {
 }
 
 // Blur produces a blurred version of the image, using a Gaussian blur.
-func Blur(dst draw.Image, src image.Image, opt *BlurOptions) {
+func Blur(dst draw.Image, src image.Image, opt *BlurOptions) os.Error {
+	if dst == nil || src == nil {
+		return nil
+	}
+
 	sd := DefaultStdDev
 	size := 0
 
@@ -31,7 +36,7 @@ func Blur(dst draw.Image, src image.Image, opt *BlurOptions) {
 		size = opt.Size
 	}
 
-	if size == 0 {
+	if size < 1 {
 		size = int(math.Ceil(sd * 6))
 	}
 
@@ -52,7 +57,7 @@ func Blur(dst draw.Image, src image.Image, opt *BlurOptions) {
 		kernel[i] = k / kSum
 	}
 
-	Convolve(dst, src, &SeparableKernel{
+	return Convolve(dst, src, &SeparableKernel{
 		X: kernel,
 		Y: kernel,
 	})

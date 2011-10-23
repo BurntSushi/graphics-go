@@ -5,6 +5,7 @@
 package graphics
 
 import (
+	"fmt"
 	"image"
 	"image/draw"
 	"math"
@@ -56,22 +57,31 @@ type fullKernel []float64
 
 func (k fullKernel) Weights() []float64 { return k }
 
-// NewKernel returns a square convolution kernel.
-func NewKernel(w []float64) (Kernel, os.Error) {
-	size := int(math.Sqrt(float64(len(w))))
+func kernelSize(w []float64) (size int, err os.Error) {
+	size = int(math.Sqrt(float64(len(w))))
 	if size*size != len(w) {
-		return nil, os.NewError("kernel not square")
+		return 0, os.NewError("graphics: kernel is not square")
 	}
 	if size%2 != 1 {
-		return nil, os.NewError("kernel size is even")
+		return 0, os.NewError("graphics: kernel size is not odd")
+	}
+	return size, nil
+}
+
+// NewKernel returns a square convolution kernel.
+func NewKernel(w []float64) (Kernel, os.Error) {
+	if _, err := kernelSize(w); err != nil {
+		return nil, err
 	}
 	return fullKernel(w), nil
 }
 
-func convolveRGBASep(dst *image.RGBA, src image.Image, k *SeparableKernel) {
-	if len(k.X) != len(k.Y) || len(k.X)%2 != 1 {
-		// TODO: return an error.
-		panic("invalid kernel")
+func convolveRGBASep(dst *image.RGBA, src image.Image, k *SeparableKernel) os.Error {
+	if len(k.X) != len(k.Y) {
+		return fmt.Errorf("graphics: kernel not square (x %d, y %d)", len(k.X), len(k.Y))
+	}
+	if len(k.X)%2 != 1 {
+		return fmt.Errorf("graphics: kernel length (%d) not odd", len(k.X))
 	}
 	radius := (len(k.X) - 1) / 2
 
@@ -179,17 +189,26 @@ func convolveRGBASep(dst *image.RGBA, src image.Image, k *SeparableKernel) {
 			dst.Pix[dstOff+3] = uint8(clamp(a+0.5, 0, 255))
 		}
 	}
+
+	return nil
 }
 
-func convolveRGBA(dst *image.RGBA, src image.Image, k Kernel) {
+func convolveRGBA(dst *image.RGBA, src image.Image, k Kernel) os.Error {
 	b := dst.Bounds()
 	bs := src.Bounds()
 	w := k.Weights()
-	size := int(math.Sqrt(float64(len(w))))
+	size, err := kernelSize(w)
+	if err != nil {
+		return err
+	}
 	radius := (size - 1) / 2
 
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
+			if !image.Pt(x, y).In(bs) {
+				continue
+			}
+
 			var r, g, b, a, adj float64
 			for cy := y - radius; cy <= y+radius; cy++ {
 				for cx := x - radius; cx <= x+radius; cx++ {
@@ -221,10 +240,16 @@ func convolveRGBA(dst *image.RGBA, src image.Image, k Kernel) {
 			dst.Pix[off+3] = uint8(clamp(a+0.5, 0, 0xff))
 		}
 	}
+
+	return nil
 }
 
 // Convolve produces dst by applying the convolution kernel k to src.
-func Convolve(dst draw.Image, src image.Image, k Kernel) {
+func Convolve(dst draw.Image, src image.Image, k Kernel) (err os.Error) {
+	if dst == nil || src == nil || k == nil {
+		return nil
+	}
+
 	b := dst.Bounds()
 	dstRgba, ok := dst.(*image.RGBA)
 	if !ok {
@@ -233,12 +258,17 @@ func Convolve(dst draw.Image, src image.Image, k Kernel) {
 
 	switch k := k.(type) {
 	case *SeparableKernel:
-		convolveRGBASep(dstRgba, src, k)
+		err = convolveRGBASep(dstRgba, src, k)
 	default:
-		convolveRGBA(dstRgba, src, k)
+		err = convolveRGBA(dstRgba, src, k)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	if !ok {
 		draw.Draw(dst, b, dstRgba, b.Min, draw.Src)
 	}
+	return nil
 }

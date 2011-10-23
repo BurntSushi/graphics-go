@@ -28,6 +28,15 @@ func scaleRGBA(src, dst *image.RGBA) {
 
 // Scale produces a scaled version of the image using bilinear interpolation.
 func Scale(dst draw.Image, src image.Image) {
+	if dst == nil || src == nil {
+		return
+	}
+
+	b := dst.Bounds()
+	if src.Bounds().Empty() || b.Empty() {
+		return
+	}
+
 	srcRgba, ok := src.(*image.RGBA)
 	if !ok {
 		b := src.Bounds()
@@ -35,7 +44,6 @@ func Scale(dst draw.Image, src image.Image) {
 		draw.Draw(srcRgba, b, src, b.Min, draw.Src)
 	}
 
-	b := dst.Bounds()
 	dstRgba, ok := dst.(*image.RGBA)
 	if !ok {
 		dstRgba = image.NewRGBA(b)

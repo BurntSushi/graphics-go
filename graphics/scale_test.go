@@ -94,10 +94,19 @@ func TestScaleOneColor(t *testing.T) {
 		src := oc.newSrc()
 		Scale(dst, src)
 
-		if !checkTransformTest(t, &oc, dst, src) {
+		if !checkTransformTest(t, &oc, dst) {
 			continue
 		}
 	}
+}
+
+func TestScaleNil(t *testing.T) {
+	Scale(nil, nil)
+}
+
+func TestScaleEmpty(t *testing.T) {
+	empty := image.NewRGBA(image.Rect(0, 0, 0, 0))
+	Scale(empty, empty)
 }
 
 func TestScaleGopher(t *testing.T) {

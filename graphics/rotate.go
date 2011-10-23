@@ -8,10 +8,9 @@ import (
 	"image"
 	"image/draw"
 	"math"
-	"os"
 )
 
-func rotateRGBA(dst, src *image.RGBA, angle float64) os.Error {
+func rotateRGBA(dst, src *image.RGBA, angle float64) {
 	dstb := dst.Bounds()
 	srcb := src.Bounds()
 	dx := float64(dstb.Dx()) / 2
@@ -48,8 +47,6 @@ func rotateRGBA(dst, src *image.RGBA, angle float64) os.Error {
 			binterpRGBA(dst, x, y, src, px, py)
 		}
 	}
-
-	return nil
 }
 
 // RotateOptions are the rotation parameters.
@@ -60,6 +57,10 @@ type RotateOptions struct {
 
 // Rotate produces a rotated version of src, drawn onto dst.
 func Rotate(dst draw.Image, src image.Image, opt *RotateOptions) {
+	if dst == nil || src == nil {
+		return
+	}
+
 	angle := 0.0
 	if opt != nil {
 		angle = opt.Angle
