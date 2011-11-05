@@ -24,8 +24,11 @@ type BlurOptions struct {
 
 // Blur produces a blurred version of the image, using a Gaussian blur.
 func Blur(dst draw.Image, src image.Image, opt *BlurOptions) os.Error {
-	if dst == nil || src == nil {
-		return nil
+	if dst == nil {
+		return os.NewError("graphics: dst is nil")
+	}
+	if src == nil {
+		return os.NewError("graphics: src is nil")
 	}
 
 	sd := DefaultStdDev

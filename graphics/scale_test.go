@@ -100,13 +100,11 @@ func TestScaleOneColor(t *testing.T) {
 	}
 }
 
-func TestScaleNil(t *testing.T) {
-	Scale(nil, nil)
-}
-
 func TestScaleEmpty(t *testing.T) {
 	empty := image.NewRGBA(image.Rect(0, 0, 0, 0))
-	Scale(empty, empty)
+	if err := Scale(empty, empty); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestScaleGopher(t *testing.T) {

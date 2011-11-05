@@ -113,13 +113,11 @@ func TestRotateOneColor(t *testing.T) {
 	}
 }
 
-func TestRotateNil(t *testing.T) {
-	Rotate(nil, nil, nil)
-}
-
 func TestRotateEmpty(t *testing.T) {
 	empty := image.NewRGBA(image.Rect(0, 0, 0, 0))
-	Rotate(empty, empty, nil)
+	if err := Rotate(empty, empty, nil); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestRotateGopherSide(t *testing.T) {
@@ -138,7 +136,7 @@ func TestRotateGopherSide(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = imageWithinTolerance(dst, cmp, 0)
+	err = imageWithinTolerance(dst, cmp, 0x101)
 	if err != nil {
 		t.Error(err)
 		return
@@ -161,7 +159,7 @@ func TestRotateGopherPartial(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = imageWithinTolerance(dst, cmp, 0)
+	err = imageWithinTolerance(dst, cmp, 0x101)
 	if err != nil {
 		t.Error(err)
 		return

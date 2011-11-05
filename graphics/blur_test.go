@@ -140,12 +140,6 @@ func TestBlurOneColor(t *testing.T) {
 	}
 }
 
-func TestBlurNil(t *testing.T) {
-	if err := Blur(nil, nil, nil); err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestBlurEmpty(t *testing.T) {
 	empty := image.NewRGBA(image.Rect(0, 0, 0, 0))
 	if err := Blur(empty, empty, nil); err != nil {
