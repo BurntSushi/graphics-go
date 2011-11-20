@@ -5,11 +5,11 @@
 package graphics
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"image/draw"
 	"math"
-	"os"
 )
 
 // clamp clamps x to the range [x0, x1].
@@ -57,26 +57,26 @@ type fullKernel []float64
 
 func (k fullKernel) Weights() []float64 { return k }
 
-func kernelSize(w []float64) (size int, err os.Error) {
+func kernelSize(w []float64) (size int, err error) {
 	size = int(math.Sqrt(float64(len(w))))
 	if size*size != len(w) {
-		return 0, os.NewError("graphics: kernel is not square")
+		return 0, errors.New("graphics: kernel is not square")
 	}
 	if size%2 != 1 {
-		return 0, os.NewError("graphics: kernel size is not odd")
+		return 0, errors.New("graphics: kernel size is not odd")
 	}
 	return size, nil
 }
 
 // NewKernel returns a square convolution kernel.
-func NewKernel(w []float64) (Kernel, os.Error) {
+func NewKernel(w []float64) (Kernel, error) {
 	if _, err := kernelSize(w); err != nil {
 		return nil, err
 	}
 	return fullKernel(w), nil
 }
 
-func convolveRGBASep(dst *image.RGBA, src image.Image, k *SeparableKernel) os.Error {
+func convolveRGBASep(dst *image.RGBA, src image.Image, k *SeparableKernel) error {
 	if len(k.X) != len(k.Y) {
 		return fmt.Errorf("graphics: kernel not square (x %d, y %d)", len(k.X), len(k.Y))
 	}
@@ -193,7 +193,7 @@ func convolveRGBASep(dst *image.RGBA, src image.Image, k *SeparableKernel) os.Er
 	return nil
 }
 
-func convolveRGBA(dst *image.RGBA, src image.Image, k Kernel) os.Error {
+func convolveRGBA(dst *image.RGBA, src image.Image, k Kernel) error {
 	b := dst.Bounds()
 	bs := src.Bounds()
 	w := k.Weights()
@@ -245,7 +245,7 @@ func convolveRGBA(dst *image.RGBA, src image.Image, k Kernel) os.Error {
 }
 
 // Convolve produces dst by applying the convolution kernel k to src.
-func Convolve(dst draw.Image, src image.Image, k Kernel) (err os.Error) {
+func Convolve(dst draw.Image, src image.Image, k Kernel) (err error) {
 	if dst == nil || src == nil || k == nil {
 		return nil
 	}

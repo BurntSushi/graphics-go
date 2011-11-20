@@ -5,10 +5,10 @@
 package graphics
 
 import (
+	"errors"
 	"image"
 	"image/draw"
 	"math"
-	"os"
 )
 
 // I is the identity Affine transform matrix.
@@ -38,12 +38,12 @@ func (a Affine) Mul(b Affine) Affine {
 }
 
 // Transform applies the affine transform to src and produces dst.
-func (a Affine) Transform(dst draw.Image, src image.Image) os.Error {
+func (a Affine) Transform(dst draw.Image, src image.Image) error {
 	if dst == nil {
-		return os.NewError("graphics: dst is nil")
+		return errors.New("graphics: dst is nil")
 	}
 	if src == nil {
-		return os.NewError("graphics: src is nil")
+		return errors.New("graphics: src is nil")
 	}
 
 	srcb := src.Bounds()
@@ -96,12 +96,12 @@ func (a Affine) pt(x0, y0 int) (x1, y1 float64) {
 // TransformCenter applies the affine transform to src and produces dst.
 // Equivalent to
 //   a.CenterFit(dst, src).Transform(dst, src).
-func (a Affine) TransformCenter(dst draw.Image, src image.Image) os.Error {
+func (a Affine) TransformCenter(dst draw.Image, src image.Image) error {
 	if dst == nil {
-		return os.NewError("graphics: dst is nil")
+		return errors.New("graphics: dst is nil")
 	}
 	if src == nil {
-		return os.NewError("graphics: src is nil")
+		return errors.New("graphics: src is nil")
 	}
 
 	return a.CenterFit(dst.Bounds(), src.Bounds()).Transform(dst, src)

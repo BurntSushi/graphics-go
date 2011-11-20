@@ -5,18 +5,18 @@
 package graphics
 
 import (
+	"errors"
 	"image"
 	"image/draw"
-	"os"
 )
 
 // Scale produces a scaled version of the image using bilinear interpolation.
-func Scale(dst draw.Image, src image.Image) os.Error {
+func Scale(dst draw.Image, src image.Image) error {
 	if dst == nil {
-		return os.NewError("graphics: dst is nil")
+		return errors.New("graphics: dst is nil")
 	}
 	if src == nil {
-		return os.NewError("graphics: src is nil")
+		return errors.New("graphics: src is nil")
 	}
 
 	b := dst.Bounds()

@@ -6,14 +6,14 @@ package detect
 
 import (
 	"bytes"
+	"encoding/xml"
+	"errors"
 	"fmt"
 	"image"
 	"io"
 	"io/ioutil"
-	"os"
 	"strconv"
 	"strings"
-	"xml"
 )
 
 type xmlFeature struct {
@@ -40,7 +40,7 @@ type opencv_storage struct {
 	}
 }
 
-func buildFeature(r string) (f Feature, err os.Error) {
+func buildFeature(r string) (f Feature, err error) {
 	var x, y, w, h int
 	var weight float64
 	_, err = fmt.Sscanf(r, "%d %d %d %d %f", &x, &y, &w, &h, &weight)
@@ -52,7 +52,7 @@ func buildFeature(r string) (f Feature, err os.Error) {
 	return
 }
 
-func buildCascade(s *opencv_storage) (c *Cascade, name string, err os.Error) {
+func buildCascade(s *opencv_storage) (c *Cascade, name string, err error) {
 	if s.Any.Type_id != "opencv-haar-classifier" {
 		err = fmt.Errorf("got %s want opencv-haar-classifier", s.Any.Type_id)
 		return
@@ -79,7 +79,7 @@ func buildCascade(s *opencv_storage) (c *Cascade, name string, err os.Error) {
 		}
 		for _, tree := range stage.Trees {
 			if tree.Tilted != 0 {
-				err = os.NewError("Cascade does not support tilted features")
+				err = errors.New("Cascade does not support tilted features")
 				return
 			}
 
@@ -107,7 +107,7 @@ func buildCascade(s *opencv_storage) (c *Cascade, name string, err os.Error) {
 }
 
 // ParseOpenCV produces a detection Cascade from an OpenCV XML file.
-func ParseOpenCV(r io.Reader) (cascade *Cascade, name string, err os.Error) {
+func ParseOpenCV(r io.Reader) (cascade *Cascade, name string, err error) {
 	// BUG(crawshaw): tag-based parsing doesn't seem to work with <_>
 	buf, err := ioutil.ReadAll(r)
 	if err != nil {

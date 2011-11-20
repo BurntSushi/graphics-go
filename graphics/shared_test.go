@@ -6,6 +6,7 @@ package graphics
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -69,7 +70,7 @@ func checkTransformTest(t *testing.T, oc *transformOneColorTest, dst *image.RGBA
 	return true
 }
 
-func loadImage(path string) (img image.Image, err os.Error) {
+func loadImage(path string) (img image.Image, err error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return
@@ -97,11 +98,11 @@ func withinTolerance(c0, c1 color.Color, tol int) bool {
 	return r <= tol && g <= tol && b <= tol && a <= tol
 }
 
-func imageWithinTolerance(m0, m1 image.Image, tol int) os.Error {
+func imageWithinTolerance(m0, m1 image.Image, tol int) error {
 	b0 := m0.Bounds()
 	b1 := m1.Bounds()
 	if !b0.Eq(b1) {
-		return os.NewError(fmt.Sprintf("got bounds %v want %v", b0, b1))
+		return errors.New(fmt.Sprintf("got bounds %v want %v", b0, b1))
 	}
 
 	for y := b0.Min.Y; y < b0.Max.Y; y++ {
@@ -110,7 +111,7 @@ func imageWithinTolerance(m0, m1 image.Image, tol int) os.Error {
 			c1 := m1.At(x, y)
 			if !withinTolerance(c0, c1, tol) {
 				e := fmt.Sprintf("got %v want %v at (%d, %d)", c0, c1, x, y)
-				return os.NewError(e)
+				return errors.New(e)
 			}
 		}
 	}

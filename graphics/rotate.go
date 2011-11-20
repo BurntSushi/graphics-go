@@ -5,9 +5,9 @@
 package graphics
 
 import (
+	"errors"
 	"image"
 	"image/draw"
-	"os"
 )
 
 // RotateOptions are the rotation parameters.
@@ -17,12 +17,12 @@ type RotateOptions struct {
 }
 
 // Rotate produces a rotated version of src, drawn onto dst.
-func Rotate(dst draw.Image, src image.Image, opt *RotateOptions) os.Error {
+func Rotate(dst draw.Image, src image.Image, opt *RotateOptions) error {
 	if dst == nil {
-		return os.NewError("graphics: dst is nil")
+		return errors.New("graphics: dst is nil")
 	}
 	if src == nil {
-		return os.NewError("graphics: src is nil")
+		return errors.New("graphics: src is nil")
 	}
 
 	angle := 0.0
