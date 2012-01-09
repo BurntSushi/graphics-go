@@ -5,7 +5,7 @@
 package graphics
 
 import (
-	"graphics-go.googlecode.com/hg/graphics/graphicstest"
+	"code.google.com/p/graphics-go/graphics/graphicstest"
 	"image"
 	"testing"
 

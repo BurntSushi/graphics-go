@@ -4,7 +4,7 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=graphics-go.googlecode.com/hg/graphics
+TARG=code.google.com/p/graphics-go/graphics
 GOFILES=\
 	affine.go\
 	bilinear.go\
