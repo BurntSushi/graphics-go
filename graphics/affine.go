@@ -5,6 +5,7 @@
 package graphics
 
 import (
+	"code.google.com/p/graphics-go/graphics/interp"
 	"errors"
 	"image"
 	"image/draw"
@@ -63,7 +64,7 @@ func (a Affine) Transform(dst draw.Image, src image.Image) error {
 		for x := b.Min.X; x < b.Max.X; x++ {
 			sx, sy := a.pt(x, y)
 			if inBounds(srcb, sx, sy) {
-				binterpRGBA(dstRgba, x, y, srcRgba, sx, sy)
+				interp.BinterpRGBA(dstRgba, x, y, srcRgba, sx, sy)
 			}
 		}
 	}

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package graphics
+package interp
 
 import (
 	"image"
@@ -14,8 +14,8 @@ func offRGBA(src *image.RGBA, x, y float64) int {
 	return (int(y)-src.Rect.Min.Y)*src.Stride + (int(x)-src.Rect.Min.X)*4
 }
 
-// binterpRGBA interpolates (sx, sy) and writes it to (x, y).
-func binterpRGBA(dst *image.RGBA, x, y int, src *image.RGBA, sx, sy float64) {
+// BinterpRGBA bilinear interpolates (sx, sy) and writes it to (x, y).
+func BinterpRGBA(dst *image.RGBA, x, y int, src *image.RGBA, sx, sy float64) {
 	srcb := src.Bounds()
 	swidth := float64(srcb.Dx())
 	sheight := float64(srcb.Dy())
