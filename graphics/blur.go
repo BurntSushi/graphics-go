@@ -5,6 +5,7 @@
 package graphics
 
 import (
+	"code.google.com/p/graphics-go/graphics/convolve"
 	"errors"
 	"image"
 	"image/draw"
@@ -60,7 +61,7 @@ func Blur(dst draw.Image, src image.Image, opt *BlurOptions) error {
 		kernel[i] = k / kSum
 	}
 
-	return Convolve(dst, src, &SeparableKernel{
+	return convolve.Convolve(dst, src, &convolve.SeparableKernel{
 		X: kernel,
 		Y: kernel,
 	})

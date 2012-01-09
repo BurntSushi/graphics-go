@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package graphics
+package convolve
 
 import (
 	"code.google.com/p/graphics-go/graphics/graphicstest"
@@ -44,7 +44,7 @@ func TestConvolve(t *testing.T) {
 		Y: []float64{0, 1, 0},
 	}
 
-	src, err := graphicstest.LoadImage("../testdata/gopher.png")
+	src, err := graphicstest.LoadImage("../../testdata/gopher.png")
 	if err != nil {
 		t.Fatal(err)
 	}

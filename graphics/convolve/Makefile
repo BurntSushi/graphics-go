@@ -4,12 +4,8 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=code.google.com/p/graphics-go/graphics
+TARG=code.google.com/p/graphics-go/graphics/convolve
 GOFILES=\
-	affine.go\
-	blur.go\
-	rotate.go\
-	scale.go\
-	thumbnail.go\
+	convolve.go\
 
 include $(GOROOT)/src/Make.pkg
