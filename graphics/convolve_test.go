@@ -5,6 +5,7 @@
 package graphics
 
 import (
+	"graphics-go.googlecode.com/hg/graphics/graphicstest"
 	"image"
 	"reflect"
 	"testing"
@@ -43,7 +44,7 @@ func TestConvolve(t *testing.T) {
 		Y: []float64{0, 1, 0},
 	}
 
-	src, err := loadImage("../testdata/gopher.png")
+	src, err := graphicstest.LoadImage("../testdata/gopher.png")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +58,7 @@ func TestConvolve(t *testing.T) {
 	full := image.NewRGBA(b)
 	Convolve(full, src, kernFull)
 
-	err = imageWithinTolerance(sep, full, 0x101)
+	err = graphicstest.ImageWithinTolerance(sep, full, 0x101)
 	if err != nil {
 		t.Fatal(err)
 	}

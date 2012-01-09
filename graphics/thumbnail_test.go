@@ -5,6 +5,7 @@
 package graphics
 
 import (
+	"graphics-go.googlecode.com/hg/graphics/graphicstest"
 	"image"
 	"testing"
 
@@ -14,18 +15,18 @@ import (
 func TestThumbnailGopher(t *testing.T) {
 	dst := image.NewRGBA(image.Rect(0, 0, 80, 80))
 
-	src, err := loadImage("../testdata/gopher.png")
+	src, err := graphicstest.LoadImage("../testdata/gopher.png")
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	Thumbnail(dst, src)
-	cmp, err := loadImage("../testdata/gopher-thumb-80x80.png")
+	cmp, err := graphicstest.LoadImage("../testdata/gopher-thumb-80x80.png")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = imageWithinTolerance(dst, cmp, 0)
+	err = graphicstest.ImageWithinTolerance(dst, cmp, 0)
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,18 +35,18 @@ func TestThumbnailGopher(t *testing.T) {
 func TestThumbnailLongGopher(t *testing.T) {
 	dst := image.NewRGBA(image.Rect(0, 0, 50, 150))
 
-	src, err := loadImage("../testdata/gopher.png")
+	src, err := graphicstest.LoadImage("../testdata/gopher.png")
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	Thumbnail(dst, src)
-	cmp, err := loadImage("../testdata/gopher-thumb-50x150.png")
+	cmp, err := graphicstest.LoadImage("../testdata/gopher-thumb-50x150.png")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = imageWithinTolerance(dst, cmp, 0)
+	err = graphicstest.ImageWithinTolerance(dst, cmp, 0)
 	if err != nil {
 		t.Error(err)
 	}

@@ -5,8 +5,9 @@
 package graphics
 
 import (
-	"testing"
+	"graphics-go.googlecode.com/hg/graphics/graphicstest"
 	"image"
+	"testing"
 
 	_ "image/png"
 )
@@ -110,7 +111,7 @@ func TestScaleEmpty(t *testing.T) {
 func TestScaleGopher(t *testing.T) {
 	dst := image.NewRGBA(image.Rect(0, 0, 100, 150))
 
-	src, err := loadImage("../testdata/gopher.png")
+	src, err := graphicstest.LoadImage("../testdata/gopher.png")
 	if err != nil {
 		t.Error(err)
 		return
@@ -118,12 +119,12 @@ func TestScaleGopher(t *testing.T) {
 
 	// Down-sample.
 	Scale(dst, src)
-	cmp, err := loadImage("../testdata/gopher-100x150.png")
+	cmp, err := graphicstest.LoadImage("../testdata/gopher-100x150.png")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = imageWithinTolerance(dst, cmp, 0)
+	err = graphicstest.ImageWithinTolerance(dst, cmp, 0)
 	if err != nil {
 		t.Error(err)
 		return
@@ -132,12 +133,12 @@ func TestScaleGopher(t *testing.T) {
 	// Up-sample.
 	dst = image.NewRGBA(image.Rect(0, 0, 500, 750))
 	Scale(dst, src)
-	cmp, err = loadImage("../testdata/gopher-500x750.png")
+	cmp, err = graphicstest.LoadImage("../testdata/gopher-500x750.png")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = imageWithinTolerance(dst, cmp, 0)
+	err = graphicstest.ImageWithinTolerance(dst, cmp, 0)
 	if err != nil {
 		t.Error(err)
 		return

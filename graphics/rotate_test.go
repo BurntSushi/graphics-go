@@ -5,6 +5,7 @@
 package graphics
 
 import (
+	"graphics-go.googlecode.com/hg/graphics/graphicstest"
 	"image"
 	"math"
 	"testing"
@@ -121,7 +122,7 @@ func TestRotateEmpty(t *testing.T) {
 }
 
 func TestRotateGopherSide(t *testing.T) {
-	src, err := loadImage("../testdata/gopher.png")
+	src, err := graphicstest.LoadImage("../testdata/gopher.png")
 	if err != nil {
 		t.Error(err)
 		return
@@ -131,12 +132,12 @@ func TestRotateGopherSide(t *testing.T) {
 	dst := image.NewRGBA(image.Rect(0, 0, srcb.Dy(), srcb.Dx()))
 	Rotate(dst, src, &RotateOptions{math.Pi / 2.0})
 
-	cmp, err := loadImage("../testdata/gopher-rotate-side.png")
+	cmp, err := graphicstest.LoadImage("../testdata/gopher-rotate-side.png")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = imageWithinTolerance(dst, cmp, 0x101)
+	err = graphicstest.ImageWithinTolerance(dst, cmp, 0x101)
 	if err != nil {
 		t.Error(err)
 		return
@@ -144,7 +145,7 @@ func TestRotateGopherSide(t *testing.T) {
 }
 
 func TestRotateGopherPartial(t *testing.T) {
-	src, err := loadImage("../testdata/gopher.png")
+	src, err := graphicstest.LoadImage("../testdata/gopher.png")
 	if err != nil {
 		t.Error(err)
 		return
@@ -154,12 +155,12 @@ func TestRotateGopherPartial(t *testing.T) {
 	dst := image.NewRGBA(image.Rect(0, 0, srcb.Dx(), srcb.Dy()))
 	Rotate(dst, src, &RotateOptions{math.Pi / 3.0})
 
-	cmp, err := loadImage("../testdata/gopher-rotate-partial.png")
+	cmp, err := graphicstest.LoadImage("../testdata/gopher-rotate-partial.png")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = imageWithinTolerance(dst, cmp, 0x101)
+	err = graphicstest.ImageWithinTolerance(dst, cmp, 0x101)
 	if err != nil {
 		t.Error(err)
 		return
