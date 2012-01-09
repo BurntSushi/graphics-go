@@ -10,7 +10,7 @@ import (
 )
 
 // Thumbnail scales and crops src so it fits in dst.
-func Thumbnail(dst draw.Image, src image.Image) {
+func Thumbnail(dst draw.Image, src image.Image) error {
 	// Scale down src in the dimension that is closer to dst.
 	sb := src.Bounds()
 	db := dst.Bounds()
@@ -24,7 +24,9 @@ func Thumbnail(dst draw.Image, src image.Image) {
 	}
 
 	buf := image.NewRGBA(b)
-	Scale(buf, src)
+	if err := Scale(buf, src); err != nil {
+		return err
+	}
 
 	// Crop.
 	// TODO(crawshaw): improve on center-alignment.
@@ -35,4 +37,5 @@ func Thumbnail(dst draw.Image, src image.Image) {
 		pt.X = (b.Dx() - db.Dx()) / 2
 	}
 	draw.Draw(dst, db, buf, pt, draw.Src)
+	return nil
 }

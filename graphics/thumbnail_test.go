@@ -17,14 +17,14 @@ func TestThumbnailGopher(t *testing.T) {
 
 	src, err := graphicstest.LoadImage("../testdata/gopher.png")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
-	Thumbnail(dst, src)
+	if err := Thumbnail(dst, src); err != nil {
+		t.Fatal(err)
+	}
 	cmp, err := graphicstest.LoadImage("../testdata/gopher-thumb-80x80.png")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 	err = graphicstest.ImageWithinTolerance(dst, cmp, 0)
 	if err != nil {
@@ -37,14 +37,14 @@ func TestThumbnailLongGopher(t *testing.T) {
 
 	src, err := graphicstest.LoadImage("../testdata/gopher.png")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
-	Thumbnail(dst, src)
+	if err := Thumbnail(dst, src); err != nil {
+		t.Fatal(err)
+	}
 	cmp, err := graphicstest.LoadImage("../testdata/gopher-thumb-50x150.png")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 	err = graphicstest.ImageWithinTolerance(dst, cmp, 0)
 	if err != nil {

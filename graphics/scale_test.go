@@ -93,7 +93,10 @@ func TestScaleOneColor(t *testing.T) {
 	for _, oc := range scaleOneColorTests {
 		dst := oc.newDst()
 		src := oc.newSrc()
-		Scale(dst, src)
+		if err := Scale(dst, src); err != nil {
+			t.Errorf("scale %s: %v", oc.desc, err)
+			continue
+		}
 
 		if !checkTransformTest(t, &oc, dst) {
 			continue
@@ -118,7 +121,9 @@ func TestScaleGopher(t *testing.T) {
 	}
 
 	// Down-sample.
-	Scale(dst, src)
+	if err := Scale(dst, src); err != nil {
+		t.Fatal(err)
+	}
 	cmp, err := graphicstest.LoadImage("../testdata/gopher-100x150.png")
 	if err != nil {
 		t.Error(err)
@@ -132,7 +137,9 @@ func TestScaleGopher(t *testing.T) {
 
 	// Up-sample.
 	dst = image.NewRGBA(image.Rect(0, 0, 500, 750))
-	Scale(dst, src)
+	if err := Scale(dst, src); err != nil {
+		t.Fatal(err)
+	}
 	cmp, err = graphicstest.LoadImage("../testdata/gopher-500x750.png")
 	if err != nil {
 		t.Error(err)

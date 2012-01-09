@@ -107,7 +107,10 @@ func TestRotateOneColor(t *testing.T) {
 		src := oc.newSrc()
 		dst := oc.newDst()
 
-		Rotate(dst, src, oc.opt.(*RotateOptions))
+		if err := Rotate(dst, src, oc.opt.(*RotateOptions)); err != nil {
+			t.Errorf("rotate %s: %v", oc.desc, err)
+			continue
+		}
 		if !checkTransformTest(t, &oc, dst) {
 			continue
 		}
@@ -124,45 +127,43 @@ func TestRotateEmpty(t *testing.T) {
 func TestRotateGopherSide(t *testing.T) {
 	src, err := graphicstest.LoadImage("../testdata/gopher.png")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	srcb := src.Bounds()
 	dst := image.NewRGBA(image.Rect(0, 0, srcb.Dy(), srcb.Dx()))
-	Rotate(dst, src, &RotateOptions{math.Pi / 2.0})
+	if err := Rotate(dst, src, &RotateOptions{math.Pi / 2.0}); err != nil {
+		t.Fatal(err)
+	}
 
 	cmp, err := graphicstest.LoadImage("../testdata/gopher-rotate-side.png")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 	err = graphicstest.ImageWithinTolerance(dst, cmp, 0x101)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 }
 
 func TestRotateGopherPartial(t *testing.T) {
 	src, err := graphicstest.LoadImage("../testdata/gopher.png")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 
 	srcb := src.Bounds()
 	dst := image.NewRGBA(image.Rect(0, 0, srcb.Dx(), srcb.Dy()))
-	Rotate(dst, src, &RotateOptions{math.Pi / 3.0})
+	if err := Rotate(dst, src, &RotateOptions{math.Pi / 3.0}); err != nil {
+		t.Fatal(err)
+	}
 
 	cmp, err := graphicstest.LoadImage("../testdata/gopher-rotate-partial.png")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 	err = graphicstest.ImageWithinTolerance(dst, cmp, 0x101)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 }
