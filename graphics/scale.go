@@ -5,6 +5,7 @@
 package graphics
 
 import (
+	"code.google.com/p/graphics-go/graphics/interp"
 	"errors"
 	"image"
 	"image/draw"
@@ -26,5 +27,5 @@ func Scale(dst draw.Image, src image.Image) error {
 	}
 	sx := float64(b.Dx()) / float64(srcb.Dx())
 	sy := float64(b.Dy()) / float64(srcb.Dy())
-	return I.Scale(sx, sy).Transform(dst, src)
+	return I.Scale(sx, sy).Transform(dst, src, interp.Bilinear)
 }

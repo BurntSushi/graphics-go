@@ -5,6 +5,7 @@
 package graphics
 
 import (
+	"code.google.com/p/graphics-go/graphics/interp"
 	"errors"
 	"image"
 	"image/draw"
@@ -30,5 +31,5 @@ func Rotate(dst draw.Image, src image.Image, opt *RotateOptions) error {
 		angle = opt.Angle
 	}
 
-	return I.Rotate(angle).TransformCenter(dst, src)
+	return I.Rotate(angle).TransformCenter(dst, src, interp.Bilinear)
 }

@@ -38,8 +38,27 @@ func (a Affine) Mul(b Affine) Affine {
 	}
 }
 
+func (a Affine) transformRGBA(dst *image.RGBA, src *image.RGBA, i interp.RGBA) error {
+	srcb := src.Bounds()
+	b := dst.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			sx, sy := a.pt(x, y)
+			if inBounds(srcb, sx, sy) {
+				c := i.RGBA(src, sx, sy)
+				off := (y-dst.Rect.Min.Y)*dst.Stride + (x-dst.Rect.Min.X)*4
+				dst.Pix[off+0] = c.R
+				dst.Pix[off+1] = c.G
+				dst.Pix[off+2] = c.B
+				dst.Pix[off+3] = c.A
+			}
+		}
+	}
+	return nil
+}
+
 // Transform applies the affine transform to src and produces dst.
-func (a Affine) Transform(dst draw.Image, src image.Image) error {
+func (a Affine) Transform(dst draw.Image, src image.Image, i interp.Interp) error {
 	if dst == nil {
 		return errors.New("graphics: dst is nil")
 	}
@@ -47,32 +66,24 @@ func (a Affine) Transform(dst draw.Image, src image.Image) error {
 		return errors.New("graphics: src is nil")
 	}
 
+	// RGBA fast path.
+	dstRGBA, dstOk := dst.(*image.RGBA)
+	srcRGBA, srcOk := src.(*image.RGBA)
+	interpRGBA, interpOk := i.(interp.RGBA)
+	if dstOk && srcOk && interpOk {
+		return a.transformRGBA(dstRGBA, srcRGBA, interpRGBA)
+	}
+
 	srcb := src.Bounds()
-	srcRgba, ok := src.(*image.RGBA)
-	if !ok {
-		srcRgba = image.NewRGBA(srcb)
-		draw.Draw(srcRgba, srcb, src, srcb.Min, draw.Src)
-	}
-
 	b := dst.Bounds()
-	dstRgba, ok := dst.(*image.RGBA)
-	if !ok {
-		dstRgba = image.NewRGBA(b)
-	}
-
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
 			sx, sy := a.pt(x, y)
 			if inBounds(srcb, sx, sy) {
-				interp.BinterpRGBA(dstRgba, x, y, srcRgba, sx, sy)
+				dst.Set(x, y, i.Interp(src, sx, sy))
 			}
 		}
 	}
-
-	if !ok {
-		draw.Draw(dst, b, dstRgba, b.Min, draw.Src)
-	}
-
 	return nil
 }
 
@@ -96,8 +107,8 @@ func (a Affine) pt(x0, y0 int) (x1, y1 float64) {
 
 // TransformCenter applies the affine transform to src and produces dst.
 // Equivalent to
-//   a.CenterFit(dst, src).Transform(dst, src).
-func (a Affine) TransformCenter(dst draw.Image, src image.Image) error {
+//   a.CenterFit(dst, src).Transform(dst, src, i).
+func (a Affine) TransformCenter(dst draw.Image, src image.Image, i interp.Interp) error {
 	if dst == nil {
 		return errors.New("graphics: dst is nil")
 	}
@@ -105,7 +116,7 @@ func (a Affine) TransformCenter(dst draw.Image, src image.Image) error {
 		return errors.New("graphics: src is nil")
 	}
 
-	return a.CenterFit(dst.Bounds(), src.Bounds()).Transform(dst, src)
+	return a.CenterFit(dst.Bounds(), src.Bounds()).Transform(dst, src, i)
 }
 
 // Scale produces a scaling transform of factors x and y.
