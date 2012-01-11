@@ -112,3 +112,32 @@ func TestBilinearRGBA(t *testing.T) {
 		}
 	}
 }
+
+func TestBilinearSubImage(t *testing.T) {
+	b0 := image.Rect(0, 0, 4, 4)
+	src0 := image.NewRGBA(b0)
+	b1 := image.Rect(1, 1, 3, 3)
+	src1 := src0.SubImage(b1).(*image.RGBA)
+	src1.Set(1, 1, color.RGBA{0x11, 0, 0, 0xff})
+	src1.Set(2, 1, color.RGBA{0x22, 0, 0, 0xff})
+	src1.Set(1, 2, color.RGBA{0x33, 0, 0, 0xff})
+	src1.Set(2, 2, color.RGBA{0x44, 0, 0, 0xff})
+
+	tests := []struct {
+		x, y float64
+		want uint8
+	}{
+		{1, 1, 0x11},
+		{3, 1, 0x22},
+		{1, 3, 0x33},
+		{3, 3, 0x44},
+		{2, 2, 0x2b},
+	}
+
+	for _, p := range tests {
+		c := Bilinear.(RGBA).RGBA(src1, p.x, p.y)
+		if c.R != p.want {
+			t.Errorf("(%.0f, %.0f): got 0x%02x want 0x%02x", p.x, p.y, c.R, p.want)
+		}
+	}
+}

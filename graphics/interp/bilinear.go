@@ -127,9 +127,8 @@ type bilinearSrc struct {
 }
 
 func findLinearSrc(b image.Rectangle, sx, sy float64) bilinearSrc {
-	swidth := float64(b.Dx())
-	sheight := float64(b.Dy())
-
+	maxX := float64(b.Max.X)
+	maxY := float64(b.Max.Y)
 	minX := float64(b.Min.X)
 	minY := float64(b.Min.Y)
 	lowX := math.Floor(sx - 0.5)
@@ -143,11 +142,11 @@ func findLinearSrc(b image.Rectangle, sx, sy float64) bilinearSrc {
 
 	highX := math.Ceil(sx - 0.5)
 	highY := math.Ceil(sy - 0.5)
-	if highX >= swidth {
-		highX = swidth - 1
+	if highX >= maxX {
+		highX = maxX - 1
 	}
-	if highY >= sheight {
-		highY = sheight - 1
+	if highY >= maxY {
+		highY = maxY - 1
 	}
 
 	// In the variables below, the 0 suffix indicates top/left, and the
@@ -172,20 +171,20 @@ func findLinearSrc(b image.Rectangle, sx, sy float64) bilinearSrc {
 	// the image, curtail the interpolation sources.
 	if lowX == highX && lowY == highY {
 		p.frac00 = 1.0
-	} else if sy <= 0.5 && sx <= 0.5 {
+	} else if sy-minY <= 0.5 && sx-minX <= 0.5 {
 		p.frac00 = 1.0
-	} else if sheight-sy <= 0.5 && swidth-sx <= 0.5 {
+	} else if maxY-sy <= 0.5 && maxX-sx <= 0.5 {
 		p.frac11 = 1.0
-	} else if sy <= 0.5 || lowY == highY {
+	} else if sy-minY <= 0.5 || lowY == highY {
 		p.frac00 = x01 - sx
 		p.frac01 = sx - x00
-	} else if sx <= 0.5 || lowX == highX {
+	} else if sx-minX <= 0.5 || lowX == highX {
 		p.frac00 = y10 - sy
 		p.frac10 = sy - y00
-	} else if sheight-sy <= 0.5 {
+	} else if maxY-sy <= 0.5 {
 		p.frac10 = x11 - sx
 		p.frac11 = sx - x10
-	} else if swidth-sx <= 0.5 {
+	} else if maxX-sx <= 0.5 {
 		p.frac01 = y11 - sy
 		p.frac11 = sy - y01
 	} else {
