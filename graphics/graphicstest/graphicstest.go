@@ -76,3 +76,37 @@ func SprintBox(box []byte, width, height int) string {
 	}
 	return buf.String()
 }
+
+// SprintImageR pretty prints the red channel of src. It looks like SprintBox.
+func SprintImageR(src *image.RGBA) string {
+	w, h := src.Rect.Dx(), src.Rect.Dy()
+	i := 0
+	box := make([]byte, w*h)
+	for y := src.Rect.Min.Y; y < src.Rect.Max.Y; y++ {
+		for x := src.Rect.Min.X; x < src.Rect.Max.X; x++ {
+			off := (y-src.Rect.Min.Y)*src.Stride + (x-src.Rect.Min.X)*4
+			box[i] = src.Pix[off]
+			i++
+		}
+	}
+	return SprintBox(box, w, h)
+}
+
+// MakeRGBA returns an image with R, G, B taken from src.
+func MakeRGBA(src []uint8, width int) *image.RGBA {
+	b := image.Rect(0, 0, width, len(src)/width)
+	ret := image.NewRGBA(b)
+	i := 0
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			ret.SetRGBA(x, y, color.RGBA{
+				R: src[i],
+				G: src[i],
+				B: src[i],
+				A: 0xff,
+			})
+			i++
+		}
+	}
+	return ret
+}
