@@ -34,10 +34,10 @@ type xmlStages struct {
 type opencv_storage struct {
 	Any struct {
 		XMLName xml.Name
-		Type_id string      `xml:"attr"`
+		Type    string      `xml:"type_id,attr"`
 		Size    string      `xml:"size"`
 		Stages  []xmlStages `xml:"stages>grp"`
-	}
+	} `xml:",any"`
 }
 
 func buildFeature(r string) (f Feature, err error) {
@@ -53,8 +53,8 @@ func buildFeature(r string) (f Feature, err error) {
 }
 
 func buildCascade(s *opencv_storage) (c *Cascade, name string, err error) {
-	if s.Any.Type_id != "opencv-haar-classifier" {
-		err = fmt.Errorf("got %s want opencv-haar-classifier", s.Any.Type_id)
+	if s.Any.Type != "opencv-haar-classifier" {
+		err = fmt.Errorf("got %s want opencv-haar-classifier", s.Any.Type)
 		return
 	}
 	name = s.Any.XMLName.Local
@@ -117,7 +117,7 @@ func ParseOpenCV(r io.Reader) (cascade *Cascade, name string, err error) {
 	buf = bytes.Replace(buf, []byte("</_>"), []byte("</grp>"), -1)
 
 	s := &opencv_storage{}
-	err = xml.Unmarshal(bytes.NewBuffer(buf), s)
+	err = xml.Unmarshal(buf, s)
 	if err != nil {
 		return
 	}
