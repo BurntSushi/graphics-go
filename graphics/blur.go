@@ -5,7 +5,7 @@
 package graphics
 
 import (
-	"code.google.com/p/graphics-go/graphics/convolve"
+	"github.com/BurntSushi/graphics-go/graphics/convolve"
 	"errors"
 	"image"
 	"image/draw"

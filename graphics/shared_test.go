@@ -6,7 +6,7 @@ package graphics
 
 import (
 	"bytes"
-	"code.google.com/p/graphics-go/graphics/graphicstest"
+	"github.com/BurntSushi/graphics-go/graphics/graphicstest"
 	"image"
 	"image/color"
 	"testing"
