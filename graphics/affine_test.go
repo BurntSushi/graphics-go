@@ -83,8 +83,8 @@ func BenchmarkAffine_CenterFit(b *testing.B) {
 func BenchmarkAffine_Transform(b *testing.B) {
 	b.StopTimer()
 	r := image.Rect(0, 0, 1024, 1024)
-	aImg := image.NewRGBA64(r)
-	bImg := image.NewRGBA64(r)
+	aImg := image.NewRGBA(r)
+	bImg := image.NewRGBA(r)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		if i%9 == 0 {
