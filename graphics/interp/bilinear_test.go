@@ -141,3 +141,45 @@ func TestBilinearSubImage(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkBilinear_Interp(b *testing.B) {
+	b.StopTimer()
+	rgba := image.NewRGBA(image.Rect(0, 0, 1024, 1024))
+	b.StartTimer()
+
+	for i := 0; i <= b.N; i++ {
+		Bilinear.Interp(rgba, float64(1), float64(1))
+	}
+}
+
+func BenchmarkBilinearGeneral(b *testing.B) {
+	b.StopTimer()
+	rgba := image.NewRGBA(image.Rect(0, 0, 1024, 1024))
+	b.StartTimer()
+
+	for i := 0; i <= b.N; i++ {
+		bilinearGeneral(rgba, float64(1), float64(1))
+	}
+}
+
+func BenchmarkBilinear_RGBA(b *testing.B) {
+	b.StopTimer()
+	rgba := image.NewRGBA(image.Rect(0, 0, 1024, 1024))
+	b.StartTimer()
+	bilinear := &bilinear{}
+
+	for i := 0; i <= b.N; i++ {
+		bilinear.RGBA(rgba, float64(10), float64(1))
+	}
+}
+
+func BenchmarkBilinear_GRAY(b *testing.B) {
+	b.StopTimer()
+	rgba := image.NewGray(image.Rect(0, 0, 1024, 1024))
+	b.StartTimer()
+	bilinear := &bilinear{}
+
+	for i := 0; i <= b.N; i++ {
+		bilinear.Gray(rgba, float64(10), float64(1))
+	}
+}

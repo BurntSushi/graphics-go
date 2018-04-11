@@ -11,11 +11,11 @@ import (
 )
 
 // Bilinear implements bilinear interpolation.
-var Bilinear Interp = bilinear{}
+var Bilinear Interp = &bilinear{}
 
 type bilinear struct{}
 
-func (i bilinear) Interp(src image.Image, x, y float64) color.Color {
+func (i *bilinear) Interp(src image.Image, x, y float64) color.Color {
 	if src, ok := src.(*image.RGBA); ok {
 		return i.RGBA(src, x, y)
 	}
@@ -59,7 +59,7 @@ func bilinearGeneral(src image.Image, x, y float64) color.Color {
 	return c
 }
 
-func (bilinear) RGBA(src *image.RGBA, x, y float64) color.RGBA {
+func (*bilinear) RGBA(src *image.RGBA, x, y float64) *color.RGBA {
 	p := findLinearSrc(src.Bounds(), x, y)
 
 	// Array offsets for the surrounding pixels.
@@ -95,10 +95,10 @@ func (bilinear) RGBA(src *image.RGBA, x, y float64) color.RGBA {
 	c.G = uint8(fg + 0.5)
 	c.B = uint8(fb + 0.5)
 	c.A = uint8(fa + 0.5)
-	return c
+	return &c
 }
 
-func (bilinear) Gray(src *image.Gray, x, y float64) color.Gray {
+func (*bilinear) Gray(src *image.Gray, x, y float64) *color.Gray {
 	p := findLinearSrc(src.Bounds(), x, y)
 
 	// Array offsets for the surrounding pixels.
@@ -115,7 +115,7 @@ func (bilinear) Gray(src *image.Gray, x, y float64) color.Gray {
 
 	var c color.Gray
 	c.Y = uint8(fc + 0.5)
-	return c
+	return &c
 }
 
 type bilinearSrc struct {
