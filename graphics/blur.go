@@ -5,11 +5,12 @@
 package graphics
 
 import (
-	"github.com/BurntSushi/graphics-go/graphics/convolve"
 	"errors"
 	"image"
 	"image/draw"
 	"math"
+
+	"github.com/ieee0824/graphics-go/graphics/convolve"
 )
 
 // DefaultStdDev is the default blurring parameter.

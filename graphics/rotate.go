@@ -5,10 +5,11 @@
 package graphics
 
 import (
-	"github.com/BurntSushi/graphics-go/graphics/interp"
 	"errors"
 	"image"
 	"image/draw"
+
+	"github.com/ieee0824/graphics-go/graphics/interp"
 )
 
 // RotateOptions are the rotation parameters.

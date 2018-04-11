@@ -10,7 +10,7 @@ to interpolate a pixel:
 
   c := interp.Bilinear.Interp(src, 1.2, 1.8)
 
-To interpolate a large number of RGBA or Gray pixels, an implementation 
+To interpolate a large number of RGBA or Gray pixels, an implementation
 may provide a fast-path by implementing the RGBA or Gray interfaces.
 
 	i1, ok := i.(interp.RGBA)

@@ -5,15 +5,16 @@
 package graphics
 
 import (
-	"github.com/BurntSushi/graphics-go/graphics/interp"
 	"errors"
 	"image"
 	"image/draw"
 	"math"
+
+	"github.com/ieee0824/graphics-go/graphics/interp"
 )
 
 // I is the identity Affine transform matrix.
-var I = Affine{
+var I = &Affine{
 	1, 0, 0,
 	0, 1, 0,
 	0, 0, 1,
@@ -24,8 +25,8 @@ var I = Affine{
 type Affine [9]float64
 
 // Mul returns the multiplication of two affine transform matrices.
-func (a Affine) Mul(b Affine) Affine {
-	return Affine{
+func (a *Affine) Mul(b *Affine) *Affine {
+	return &Affine{
 		a[0]*b[0] + a[1]*b[3] + a[2]*b[6],
 		a[0]*b[1] + a[1]*b[4] + a[2]*b[7],
 		a[0]*b[2] + a[1]*b[5] + a[2]*b[8],
@@ -38,7 +39,7 @@ func (a Affine) Mul(b Affine) Affine {
 	}
 }
 
-func (a Affine) transformRGBA(dst *image.RGBA, src *image.RGBA, i interp.RGBA) error {
+func (a *Affine) transformRGBA(dst *image.RGBA, src *image.RGBA, i interp.RGBA) error {
 	srcb := src.Bounds()
 	b := dst.Bounds()
 	for y := b.Min.Y; y < b.Max.Y; y++ {
@@ -58,7 +59,7 @@ func (a Affine) transformRGBA(dst *image.RGBA, src *image.RGBA, i interp.RGBA) e
 }
 
 // Transform applies the affine transform to src and produces dst.
-func (a Affine) Transform(dst draw.Image, src image.Image, i interp.Interp) error {
+func (a *Affine) Transform(dst draw.Image, src image.Image, i interp.Interp) error {
 	if dst == nil {
 		return errors.New("graphics: dst is nil")
 	}
@@ -97,7 +98,7 @@ func inBounds(b image.Rectangle, x, y float64) bool {
 	return true
 }
 
-func (a Affine) pt(x0, y0 int) (x1, y1 float64) {
+func (a *Affine) pt(x0, y0 int) (x1, y1 float64) {
 	fx := float64(x0) + 0.5
 	fy := float64(y0) + 0.5
 	x1 = fx*a[0] + fy*a[1] + a[2]
@@ -108,7 +109,7 @@ func (a Affine) pt(x0, y0 int) (x1, y1 float64) {
 // TransformCenter applies the affine transform to src and produces dst.
 // Equivalent to
 //   a.CenterFit(dst, src).Transform(dst, src, i).
-func (a Affine) TransformCenter(dst draw.Image, src image.Image, i interp.Interp) error {
+func (a *Affine) TransformCenter(dst draw.Image, src image.Image, i interp.Interp) error {
 	if dst == nil {
 		return errors.New("graphics: dst is nil")
 	}
@@ -120,8 +121,8 @@ func (a Affine) TransformCenter(dst draw.Image, src image.Image, i interp.Interp
 }
 
 // Scale produces a scaling transform of factors x and y.
-func (a Affine) Scale(x, y float64) Affine {
-	return a.Mul(Affine{
+func (a *Affine) Scale(x, y float64) *Affine {
+	return a.Mul(&Affine{
 		1 / x, 0, 0,
 		0, 1 / y, 0,
 		0, 0, 1,
@@ -129,9 +130,9 @@ func (a Affine) Scale(x, y float64) Affine {
 }
 
 // Rotate produces a clockwise rotation transform of angle, in radians.
-func (a Affine) Rotate(angle float64) Affine {
+func (a *Affine) Rotate(angle float64) *Affine {
 	s, c := math.Sincos(angle)
-	return a.Mul(Affine{
+	return a.Mul(&Affine{
 		+c, +s, +0,
 		-s, +c, +0,
 		+0, +0, +1,
@@ -139,9 +140,9 @@ func (a Affine) Rotate(angle float64) Affine {
 }
 
 // Shear produces a shear transform by the slopes x and y.
-func (a Affine) Shear(x, y float64) Affine {
+func (a *Affine) Shear(x, y float64) *Affine {
 	d := 1 - x*y
-	return a.Mul(Affine{
+	return a.Mul(&Affine{
 		+1 / d, -x / d, 0,
 		-y / d, +1 / d, 0,
 		0, 0, 1,
@@ -149,8 +150,8 @@ func (a Affine) Shear(x, y float64) Affine {
 }
 
 // Translate produces a translation transform with pixel distances x and y.
-func (a Affine) Translate(x, y float64) Affine {
-	return a.Mul(Affine{
+func (a *Affine) Translate(x, y float64) *Affine {
+	return a.Mul(&Affine{
 		1, 0, -x,
 		0, 1, -y,
 		0, 0, +1,
@@ -158,14 +159,14 @@ func (a Affine) Translate(x, y float64) Affine {
 }
 
 // Center produces the affine transform, centered around the provided point.
-func (a Affine) Center(x, y float64) Affine {
+func (a *Affine) Center(x, y float64) *Affine {
 	return I.Translate(-x, -y).Mul(a).Translate(x, y)
 }
 
 // CenterFit produces the affine transform, centered around the rectangles.
 // It is equivalent to
 //   I.Translate(-<center of src>).Mul(a).Translate(<center of dst>)
-func (a Affine) CenterFit(dst, src image.Rectangle) Affine {
+func (a *Affine) CenterFit(dst, src image.Rectangle) *Affine {
 	dx := float64(dst.Min.X) + float64(dst.Dx())/2
 	dy := float64(dst.Min.Y) + float64(dst.Dy())/2
 	sx := float64(src.Min.X) + float64(src.Dx())/2
