@@ -31,6 +31,9 @@ func Blur(dst draw.Image, src image.Image, opt *BlurOptions) error {
 	if src == nil {
 		return errors.New("graphics: src is nil")
 	}
+	if opt != nil && opt.StdDev == 0 {
+		return errors.New("graphics: stdDev == 0")
+	}
 
 	sd := DefaultStdDev
 	size := 0

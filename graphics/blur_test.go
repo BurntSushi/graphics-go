@@ -8,6 +8,7 @@ import (
 	"github.com/BurntSushi/graphics-go/graphics/graphicstest"
 	"image"
 	"image/color"
+	"image/draw"
 	"testing"
 
 	_ "image/png"
@@ -137,6 +138,52 @@ func TestBlurOneColor(t *testing.T) {
 
 		if !checkTransformTest(t, &oc, dst) {
 			continue
+		}
+	}
+}
+
+func TestBlurError(t *testing.T) {
+	src, err := graphicstest.LoadImage("../testdata/gopher.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dst := image.NewRGBA(src.Bounds())
+	opt := &BlurOptions{1, 2}
+
+	testData := []struct {
+		src    image.Image
+		dst    draw.Image
+		opt    *BlurOptions
+		errMsg string
+	}{
+		{
+			src:    nil,
+			dst:    dst,
+			opt:    opt,
+			errMsg: "graphics: src is nil",
+		},
+		{
+			src:    src,
+			dst:    nil,
+			opt:    opt,
+			errMsg: "graphics: dst is nil",
+		},
+		{
+			src:    src,
+			dst:    dst,
+			opt:    &BlurOptions{0, 2},
+			errMsg: "graphics: stdDev == 0",
+		},
+	}
+	for _, tc := range testData {
+		err := Blur(tc.dst, tc.src, tc.opt)
+		if err == nil {
+			t.Errorf("want errMsg `%s` but got nil", tc.errMsg)
+			continue
+		}
+		if err.Error() != tc.errMsg {
+			t.Errorf("errMsg: got `%s` but want `%s`", err.Error(), tc.errMsg)
 		}
 	}
 }
